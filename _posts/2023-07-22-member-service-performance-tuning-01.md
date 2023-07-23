@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "싱글벙글 회원 서비스 성능 튜닝기"
-subtitle: "어카운트팀이 진행하는 서비스 성능 개선 과정에 대해 소개합니다"
+subtitle: "어카운트팀이 완료한 서비스 성능 개선 과정을 소개합니다"
 date: 2023-07-22 11:01:00 +0900
 category: dev
 background: '/img/member-service-performance-tuning-01/background.jpg'
@@ -47,7 +47,7 @@ tags:
 
 쏘카 서비스는 인증된 회원 정보를 회원 서비스에 요청합니다. 회원 서비스는 인증 서비스에 인증 정보를 요청해 취합한 결과를 반환합니다.
 
-각 쏘카 서비스 및 인증 서비스는 성수기를 대비해 대대적인 개편을 거쳤지만 회원 서비스는 문제가 없다는 판단애 개선 대상에 포함하지 않았습니다. 하지만 이 서비스에서 문제가 발생했습니다.
+각 쏘카 서비스 및 인증 서비스는 성수기를 대비해 대대적인 개편을 거쳤지만 회원 서비스는 문제가 없다는 판단에 개선 대상에 포함하지 않았습니다. 하지만 이 서비스에서 문제가 발생했습니다.
 
 ~~왜 슬픈 예감은 틀린적이 없나~~
 
@@ -113,10 +113,10 @@ fun findByAccessToken(accessToken: String): MemberDto {
 
     val foundMember = memberRepository // <- DB 커넥션 사용
         .findById(
-        foundAccessToken.memberId!!.toInt()
-    ).orElseThrow {
-        MemberNotFoundException("Member Not Found")
-    }
+            foundAccessToken.memberId!!.toInt()
+        ).orElseThrow {
+            MemberNotFoundException("Member Not Found")
+        }
 
     return MemberConverter.fromMemberToMemberDto(foundMember)
 } // <- DB 커넥션 반납
@@ -146,11 +146,11 @@ fun findByAccessToken(accessToken: String): MemberDto {
 
 ```kotlin
 @Transactional(readOnly = true) //<- Transactional 추가
-    @Repository
-    interface MemberRepository : JpaRepository<Member, Int> {
-        fun findByUserid(email: String?): Optional<Member>
-        fun findByEmail(email: String): Optional<Member>
-    }
+@Repository
+interface MemberRepository : JpaRepository<Member, Int> {
+    fun findByUserid(email: String?): Optional<Member>
+    fun findByEmail(email: String): Optional<Member>
+}
 ```
 
 [코드] - transaction 이 추가된 member repository
@@ -224,7 +224,7 @@ resources:
 
 [코드] - pod resource 설정
 
-회원 서비스는 멀티스레드(multi-thread)로 동작하는 Spring Boot Embedded Tomcat으로 운영하고 있으며 서버 리소스는 1 core, 1GB 메모리가 할당되어 있습니다. 작고 가벼운 애플리케이션을 지향하기 때문에 대부분의 서비스를 위 환경으로 운영합니다. 그러나 애플리케이션이 멀티스레드 방식으로 동작하면 반드시 적절한 스레드 수가 할당 됐는지 살펴봐야 합니다.
+회원 서비스는 멀티스레드(multi-thread)로 동작하는 Spring Boot Embedded Tomcat으로 운영하고 있으며 서버 리소스는 1 core, 1GB 메모리가 할당되어 있습니다. 작고 가벼운 애플리케이션을 지향하기 때문에 대부분의 서비스를 위 환경으로 운영합니다. 그러나 애플리케이션이 멀티스레드 방식으로 동작하면 반드시 적절한 스레드 수가 할당 됐는지 살펴봐야 합니다.
 
 한정된 자원을 두고 경합을 벌이다 효율적으로 동작하는 임계치를 넘어서면 오히려 효율이 떨어지는 문제가 발생합니다. Embedded Tomcat의 경우 설정을 하지 않으면 활성화되는 스레드는 최대 200개입니다. 서비스 환경에 따라 다를 수 있지만 이는 적절하지 않다고 생각하여 설정을 변경하며 성능 테스트를 진행했고 아래와 같은 지표를 얻었습니다.
 
@@ -262,7 +262,7 @@ JVM 애플리케이션은 클래스 로딩을 할 때 레이지(Lazy) 로딩 방
 ```kotlin
 @Component
 class WarmupApplicationListener : ApplicationListener<ApplicationReadyEvent> {
-   
+
     override fun onApplicationEvent(event: ApplicationReadyEvent) {
         try {
             warmup()
